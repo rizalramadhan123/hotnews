@@ -1,15 +1,12 @@
 version: "3.9"
 
 services:
-  yii-web:
+  yii2-app:
     build: .
-    container_name: yii-web
+    container_name: yii2-app
     ports:
-      - "9090:80"
+      - "9090:80"  # localhost:9090 mengarah ke container port 80
     volumes:
       - ./:/var/www/html
-    user: "33:33" # Jalankan container sebagai www-data
     environment:
-      - APACHE_RUN_USER=www-data
-      - APACHE_RUN_GROUP=www-data
-    restart: unless-stopped
+      APACHE_DOCUMENT_ROOT: /var/www/html/web

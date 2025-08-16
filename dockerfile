@@ -1,24 +1,33 @@
-# Gunakan PHP 8.1 + Apache official image
-FROM php:8.1-apache
-
-# Install ekstensi PHP yang sering dipakai Yii2
-RUN docker-php-ext-install pdo pdo_mysql mbstring opcache
-
-# Enable Apache mod_rewrite (dibutuhkan Yii2 untuk routing)
-RUN a2enmod rewrite
+# Base image PHP + Apache
+FROM php:8.2-apache
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy source code Yii2 ke container
+# Install ekstensi PHP yang dibutuhkan Yii2
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    unzip \
+    git \
+    && docker-php-ext-install zip
+
+# Aktifkan mod_rewrite untuk pretty URL
+RUN a2enmod rewrite
+
+# Set DocumentRoot ke folder 'web'
+ENV APACHE_DOCUMENT_ROOT /var/www/html/web
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+
+# Copy seluruh aplikasi ke container
 COPY . /var/www/html
 
-# Set permission agar Yii2 bisa publish asset & write runtime
-RUN chown -R www-data:www-data /var/www/html/runtime /var/www/html/web/assets \
-    && chmod -R 775 /var/www/html/runtime /var/www/html/web/assets
+# Pastikan folder runtime & web/assets bisa ditulis Apache
+RUN mkdir -p /var/www/html/runtime /var/www/html/web/assets \
+    && chown -R www-data:www-data /var/www/html/runtime /var/www/html/web/assets \
+    && chown -R www-data:www-data /var/www/html
 
 # Expose port 80
 EXPOSE 80
 
-# Jalankan Apache
+# Start Apache
 CMD ["apache2-foreground"]
